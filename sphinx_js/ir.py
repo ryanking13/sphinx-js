@@ -23,8 +23,8 @@ let's at least have a well-documented one and one slightly more likely to
 survive template changes.
 
 """
-from dataclasses import InitVar, dataclass
-from typing import Any, List
+from dataclasses import dataclass, field
+from typing import Any
 
 from .analyzer_utils import dotted_path
 
@@ -49,19 +49,19 @@ class Pathname:
 
     """
 
-    def __init__(self, segments):
+    def __init__(self, segments: list[str]):
         self.segments = segments
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "".join(self.segments)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Pathname(%r)>" % self.segments
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and self.segments == other.segments
 
-    def dotted(self):
+    def dotted(self) -> str:
         return dotted_path(self.segments)
 
 
@@ -70,7 +70,7 @@ class _NoDefault:
     troubleshoot code paths that grab ``Param.default`` without checking
     ``Param.has_default`` first."""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<no default value>"
 
 
@@ -111,15 +111,14 @@ class Param:
     #: Return the default value of this parameter, string-formatted so it can
     #: be immediately suffixed to an equal sign in a formal param list. For
     #: example, the number 6 becomes the string "6" to create ``foo=6``. If
-    #: has_default=True, this must be set.
-    default: InitVar[Any] = NO_DEFAULT  # noqa: flake8 thinks this is a "def".
+    # : has_default=True, this must be set.
+    default: str | _NoDefault = NO_DEFAULT
 
-    def __post_init__(self, default):
-        if self.has_default and default is NO_DEFAULT:
+    def __post_init__(self) -> None:
+        if self.has_default and self.default is NO_DEFAULT:
             raise ValueError(
                 "Tried to construct a Param with has_default=True but without `default` specified."
             )
-        self.default = default  # type:ignore[attr-defined]
 
 
 @dataclass
@@ -209,7 +208,7 @@ class Function(TopLevel, _Member):
     """A function or a method of a class"""
 
     params: list[Param]
-    exceptions: List[Exc]  # noqa: Linter is buggy.
+    exceptions: list[Exc]
     returns: list[Return]
 
 
@@ -245,3 +244,4 @@ class Class(TopLevel, _MembersAndSupers):
     # itself. These are supported and extracted by jsdoc, but they end up in an
     # `undocumented: True` doclet and so are presently filtered out. But we do
     # have the space to include them someday.
+    params: list[Param] = field(default_factory=list)
