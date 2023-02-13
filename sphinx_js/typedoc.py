@@ -90,11 +90,14 @@ class Converter:
         if parent and isinstance(node, Signature):
             node.parent_member_properties = parent.member_properties()
 
-        # Burrow into everything that could contain more ID'd items. We don't
-        # need setSignature or getSignature for now. Do we need indexSignature?
+        # Burrow into everything that could contain more ID'd items
         children: list[Sequence[IndexType]] = []
 
         children.append(node.children)
+        if isinstance(node, Accessor):
+            children.append(node.getSignature)
+            children.append(node.setSignature)
+
         if isinstance(node, Callable):
             children.append(node.signatures)
 
