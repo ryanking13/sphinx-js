@@ -3,7 +3,8 @@ from unittest import TestCase
 
 import pytest
 
-from sphinx_js.ir import Attribute, Class, Function, Param, Pathname, Return
+from sphinx_js.ir import Attribute, Class, Function, Param, Pathname, Return, TypeParam
+from sphinx_js.renderers import AutoClassRenderer, AutoFunctionRenderer
 from sphinx_js.typedoc import Comment, Converter, parse
 from tests.testing import NO_MATCH, TypeDocAnalyzerTestCase, TypeDocTestCase, dict_where
 
@@ -458,18 +459,52 @@ class TypeNameTests(TypeDocAnalyzerTestCase):
         assert obj.type == "T"
         assert obj.params[0].type == "T"
 
-    @pytest.mark.xfail(reason="Needs update and fix")
     def test_constrained_by_interface(self):
         """Make sure ``extends SomeInterface`` constraints are rendered."""
         obj = self.analyzer.get_object(["constrainedIdentity"])
-        assert obj.params[0].type == "T extends Lengthwise"
-        assert obj.returns[0].type == "T extends Lengthwise"
+        assert obj.params[0].type == "T"
+        assert obj.returns[0].type == "T"
+        assert obj.type_params[0] == TypeParam(
+            name="T", extends="Lengthwise", description="the identity type"
+        )
 
-    @pytest.mark.xfail(reason="Needs update and fix")
     def test_constrained_by_key(self):
         """Make sure ``extends keyof SomeObject`` constraints are rendered."""
-        obj = self.analyzer.get_object(["getProperty"])
-        assert obj.params[1].type == "K extends keyof T"
+        obj: Function = self.analyzer.get_object(["getProperty"])
+        assert obj.params[0].name == "obj"
+        assert obj.params[0].type == "T"
+        assert obj.params[1].type == "K"
+        # TODO?
+        # assert obj.returns[0].type == "<TODO: not implemented>"
+        assert obj.type_params[0] == TypeParam(
+            name="T", extends=None, description="The type of the object"
+        )
+        assert obj.type_params[1] == TypeParam(
+            name="K", extends="string|number|symbol", description="The type of the key"
+        )
+
+        # TODO: this part maybe belongs in a unit test for the renderer or something
+        a = AutoFunctionRenderer.__new__(AutoFunctionRenderer)
+        a._explicit_formal_params = None
+        a._content = []
+        rst = a.rst([obj.name], obj)
+        assert ":typeparam T: The type of the object" in rst
+        assert (
+            ":typeparam K extends string\\|number\\|symbol: The type of the key" in rst
+        )
+
+    def test_class_constrained(self):
+        # TODO: this may belong somewhere else
+        obj: Class = self.analyzer.get_object(["ParamClass"])
+        assert obj.type_params[0] == TypeParam(
+            name="S", extends="number[]", description="The type we contain"
+        )
+        a = AutoClassRenderer.__new__(AutoClassRenderer)
+        a._explicit_formal_params = None
+        a._content = []
+        a._options = {}
+        rst = a.rst([obj.name], obj)
+        assert ":typeparam S extends number\\[\\]: The type we contain" in rst
 
     @pytest.mark.xfail(reason="reflection not implemented yet")
     def test_constrained_by_constructor(self):

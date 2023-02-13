@@ -7,7 +7,7 @@ from inspect import isclass
 from json import load
 from os.path import basename, join, normpath, relpath, sep, splitext
 from tempfile import NamedTemporaryFile
-from typing import Annotated, Any, Literal, Optional, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field, ValidationError
 from sphinx.application import Sphinx
@@ -377,6 +377,7 @@ class ClassOrInterface(NodeBase):
     extendedTypes: list["TypeD"] = []
     implementedTypes: list["TypeD"] = []
     children: Sequence["ClassChild"] = []
+    typeParameter: list["TypeParameter"] = []
 
     def _related_types(
         self,
@@ -431,6 +432,9 @@ class ClassOrInterface(NodeBase):
         for child in self.children:
             if child.kindString == "Constructor":
                 # This really, really should happen exactly once per class.
+                # Type parameter cannot appear on constructor declaration so copy
+                # it down from the class.
+                child.signatures[0].typeParameter = self.typeParameter
                 constructor = child.to_ir(converter)[0]
                 continue
             result = child.to_ir(converter)[0]
@@ -450,6 +454,7 @@ class Class(ClassOrInterface):
             supers=self._related_types(converter, kind="extendedTypes"),
             is_abstract=self.flags.isAbstract,
             interfaces=self._related_types(converter, kind="implementedTypes"),
+            type_params=[x.to_ir(converter) for x in self.typeParameter],
             **self._top_level_properties(),
         )
         return result, self.children
@@ -463,6 +468,7 @@ class Interface(ClassOrInterface):
         result = ir.Interface(
             members=members,
             supers=self._related_types(converter, kind="extendedTypes"),
+            type_params=[x.to_ir(converter) for x in self.typeParameter],
             **self._top_level_properties(),
         )
         return result, self.children
@@ -530,6 +536,20 @@ def make_description(comment: Comment) -> str:
     return ret.strip()
 
 
+class TypeParameter(BaseModel):
+    name: str
+    type: "OptionalTypeD"
+    comment: Comment = Field(default_factory=Comment)
+
+    def to_ir(self, converter: Converter) -> ir.TypeParam:
+        extends = None
+        if self.type:
+            extends = self.type.render_name(converter)
+        return ir.TypeParam(
+            self.name, extends, description=make_description(self.comment)
+        )
+
+
 class Param(Base):
     kindString: Literal["Parameter"] = "Parameter"
     comment: Comment = Field(default_factory=Comment)
@@ -563,9 +583,10 @@ class Signature(TopLevelProperties):
     ]
 
     name: str
+    typeParameter: list[TypeParameter] = []
     parameters: list["Param"] = []
     sources: list[Source] = []
-    type: "TypeD"
+    type: "TypeD"  # This is the return type!
     inheritedFrom: Any = None
     parent_member_properties: MemberProperties = {}  # type: ignore[typeddict-item]
 
@@ -607,6 +628,7 @@ class Signature(TopLevelProperties):
             exceptions=[],
             # Though perhaps technically true, it looks weird to the user
             # (and in the template) if constructors have a return value:
+            type_params=[x.to_ir(converter) for x in self.typeParameter],
             returns=self.return_type(converter)
             if self.kindString != "Constructor signature"
             else [],
@@ -660,19 +682,6 @@ class OperatorType(TypeBase):
 
     def _render_name_root(self, converter: Converter) -> str:
         return self.operator + " " + self.target.render_name(converter)
-
-
-class ParameterType(TypeBase):
-    type: Literal["typeParameter"]
-    name: str
-    constraint: Optional["TypeD"]
-
-    def _render_name_root(self, converter: Converter) -> str:
-        name = self.name
-        if self.constraint is not None:
-            name += " extends " + self.constraint.render_name(converter)
-            # e.g. K += extends + keyof T
-        return name
 
 
 class ReferenceType(TypeBase):
@@ -733,13 +742,13 @@ Type = (
     | LiteralType
     | OtherType
     | OperatorType
-    | ParameterType
     | ReferenceType
     | ReflectionType
     | TupleType
 )
 
-TypeD = Annotated[Type, Field(discriminator="TypeD")]
+TypeD = Annotated[Type, Field(discriminator="type")]
+OptionalTypeD = Annotated[Type | None, Field(discriminator="type")]
 
 IndexType = Node | Project | Signature | Param
 
