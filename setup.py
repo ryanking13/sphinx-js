@@ -25,7 +25,7 @@ setup(
     ],
     python_requires=">=3.10",
     classifiers=[
-        'Framework :: Sphinx :: Extension',
+        "Framework :: Sphinx :: Extension",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "Development Status :: 5 - Production/Stable",
