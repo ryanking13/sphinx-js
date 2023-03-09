@@ -22,7 +22,7 @@ Setup
 
         npm install typedoc
 
-   JSDoc 3.6.3 and 4.0.0 and TypeDoc 0.22 are known to work.
+  JSDoc 3.6.3 and 4.0.0 and TypeDoc 0.22 are known to work.
 
 
 2. Install sphinx-js, which will pull in Sphinx itself as a dependency::
@@ -355,10 +355,10 @@ Caveats
 Tests
 =====
 
-Run the tests using tox, which will also install JSDoc and TypeDoc at pinned versions::
+Run the tests using nox, which will also install JSDoc and TypeDoc at pinned versions::
 
-    pip install tox
-    tox
+    pip install nox
+    nox
 
 Version History
 ===============
