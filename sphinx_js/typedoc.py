@@ -1,22 +1,42 @@
 """Converter from TypeDoc output to IR format"""
 
 import pathlib
+import re
 import subprocess
 from collections.abc import Sequence
+from errno import ENOENT
+from functools import cache
 from inspect import isclass
 from json import load
-from os.path import basename, join, normpath, relpath, sep, splitext
+from os.path import basename, relpath, sep, splitext
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field, ValidationError
 from sphinx.application import Sphinx
+from sphinx.errors import SphinxError
 
 from . import ir
 from .analyzer_utils import Command, is_explicitly_rooted, search_node_modules
 from .suffix_tree import SuffixTree
 
 __all__ = ["Analyzer"]
+
+
+@cache
+def typedoc_version_info(typedoc: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    result = subprocess.run(
+        [typedoc, "--version"], capture_output=True, encoding="utf8"
+    )
+    lines = result.stdout.strip().splitlines()
+    m = re.search(r"TypeDoc ([0-9]+\.[0-9]+\.[0-9]+)", lines[0])
+    assert m
+    typedoc_version = tuple(int(x) for x in m.group(1).split("."))
+    m = re.search(r"TypeScript ([0-9]+\.[0-9]+\.[0-9]+)", lines[1])
+    assert m
+    typescript_version = tuple(int(x) for x in m.group(1).split("."))
+    return typedoc_version, typescript_version
 
 
 def typedoc_output(
@@ -28,11 +48,24 @@ def typedoc_output(
     command = Command("node")
     command.add(typedoc)
     if config_path:
-        command.add("--tsconfig", normpath(join(sphinx_conf_dir, config_path)))
+        tsconfig_path = str((Path(sphinx_conf_dir) / config_path).absolute())
+        command.add("--tsconfig", tsconfig_path)
+    typedoc_version, _ = typedoc_version_info(typedoc)
+    if typedoc_version >= (0, 22, 0):
+        command.add("--entryPointStrategy", "expand")
 
     with NamedTemporaryFile(mode="w+b") as temp:
         command.add("--json", temp.name, *abs_source_paths)
-        subprocess.call(command.make())
+        try:
+            subprocess.run(command.make())
+        except OSError as exc:
+            if exc.errno == ENOENT:
+                raise SphinxError(
+                    '%s was not found. Install it using "npm install -g typedoc".'
+                    % command.program
+                )
+            else:
+                raise
         # typedoc emits a valid JSON file even if it finds no TS files in the dir:
         return parse(load(temp))
 
