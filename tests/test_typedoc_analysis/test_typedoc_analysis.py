@@ -512,11 +512,14 @@ class TypeNameTests(TypeDocAnalyzerTestCase):
         rst = a.rst([obj.name], obj)
         assert ":typeparam S extends number\\[\\]: The type we contain" in rst
 
-    @pytest.mark.xfail(reason="reflection not implemented yet")
     def test_constrained_by_constructor(self):
         """Make sure ``new ()`` expressions and, more generally, per-property
         constraints are rendered properly."""
-        obj = self.analyzer.get_object(["create"])
+        if TYPEDOC_VERSION < (0, 22, 0):
+            pytest.xfail("Need typedoc 0.22 or later")
+        obj = self.analyzer.get_object(["create1"])
+        assert obj.params[0].type == "{new (x: number): A}"
+        obj = self.analyzer.get_object(["create2"])
         assert obj.params[0].type == "{new (): T}"
 
     def test_utility_types(self):
