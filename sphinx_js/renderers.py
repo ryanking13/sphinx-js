@@ -205,6 +205,52 @@ class JsRenderer:
 
         return "({})".format(", ".join(formals))
 
+    def _return_formatter(self, return_: Return) -> tuple[list[str], str]:
+        """Derive heads and tail from ``@returns`` blocks."""
+        tail = ("**%s** -- " % rst.escape(return_.type)) if return_.type else ""
+        tail += return_.description
+        return ["returns"], tail
+
+
+    def _type_param_formatter(self, tparam: TypeParam) -> tuple[list[str], str] | None:
+        v = tparam.name
+        if tparam.extends:
+            v += f" extends {tparam.extends}"
+        heads = ["typeparam", v]
+        return heads, tparam.description
+
+
+    def _param_formatter(self, param: Param) -> tuple[list[str], str] | None:
+        """Derive heads and tail from ``@param`` blocks."""
+        if not param.type and not param.description:
+            # There's nothing worth saying about this param.
+            return None
+        heads = ["param"]
+        if param.type:
+            heads.append(param.type)
+        heads.append(param.name)
+        tail = param.description
+        return heads, tail
+
+
+    def _param_type_formatter(self, param: Param) -> tuple[list[str], str] | None:
+        """Generate types for function parameters specified in field."""
+        if not param.type:
+            return None
+        heads = ["type", param.name]
+        tail = rst.escape(param.type)
+        return heads, tail
+
+
+    def _exception_formatter(self, exception: Exc) -> tuple[list[str], str]:
+        """Derive heads and tail from ``@throws`` blocks."""
+        heads = ["throws"]
+        if exception.type:
+            heads.append(exception.type)
+        tail = exception.description
+        return heads, tail
+
+
     def _fields(self, obj: TopLevel) -> Iterator[tuple[list[str], str]]:
         """Return an iterable of "info fields" to be included in the directive,
         like params, return values, and exceptions.
@@ -215,13 +261,13 @@ class JsRenderer:
 
         """
         FIELD_TYPES: list[tuple[str, Callable[[Any], tuple[list[str], str] | None]]] = [
-            ("type_params", _type_param_formatter),
-            ("params", _param_formatter),
-            ("params", _param_type_formatter),
-            ("properties", _param_formatter),
-            ("properties", _param_type_formatter),
-            ("exceptions", _exception_formatter),
-            ("returns", _return_formatter),
+            ("type_params", self._type_param_formatter),
+            ("params", self._param_formatter),
+            ("params", self._param_type_formatter),
+            ("properties", self._param_formatter),
+            ("properties", self._param_type_formatter),
+            ("exceptions", self._exception_formatter),
+            ("returns", self._return_formatter),
         ]
         for collection_attr, callback in FIELD_TYPES:
             for instance in getattr(obj, collection_attr, []):
@@ -420,49 +466,3 @@ class AutoAttributeRenderer(JsRenderer):
 def unwrapped(text: str) -> str:
     """Return the text with line wrapping removed."""
     return sub(r"[ \t]*[\r\n]+[ \t]*", " ", text)
-
-
-def _return_formatter(return_: Return) -> tuple[list[str], str]:
-    """Derive heads and tail from ``@returns`` blocks."""
-    tail = ("**%s** -- " % rst.escape(return_.type)) if return_.type else ""
-    tail += return_.description
-    return ["returns"], tail
-
-
-def _type_param_formatter(tparam: TypeParam) -> tuple[list[str], str] | None:
-    v = tparam.name
-    if tparam.extends:
-        v += f" extends {tparam.extends}"
-    heads = ["typeparam", v]
-    return heads, tparam.description
-
-
-def _param_formatter(param: Param) -> tuple[list[str], str] | None:
-    """Derive heads and tail from ``@param`` blocks."""
-    if not param.type and not param.description:
-        # There's nothing worth saying about this param.
-        return None
-    heads = ["param"]
-    if param.type:
-        heads.append(param.type)
-    heads.append(param.name)
-    tail = param.description
-    return heads, tail
-
-
-def _param_type_formatter(param: Param) -> tuple[list[str], str] | None:
-    """Generate types for function parameters specified in field."""
-    if not param.type:
-        return None
-    heads = ["type", param.name]
-    tail = rst.escape(param.type)
-    return heads, tail
-
-
-def _exception_formatter(exception: Exc) -> tuple[list[str], str]:
-    """Derive heads and tail from ``@throws`` blocks."""
-    heads = ["throws"]
-    if exception.type:
-        heads.append(exception.type)
-    tail = exception.description
-    return heads, tail
