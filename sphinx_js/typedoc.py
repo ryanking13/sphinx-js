@@ -412,11 +412,14 @@ class Accessor(NodeBase):
     def to_ir(self, converter: Converter) -> tuple[ir.Attribute, Sequence["Node"]]:
         if self.getSignature:
             # There's no signature to speak of for a getter: only a return type.
-            type = self.getSignature.type  # type: ignore[union-attr]
+            assert isinstance(self.getSignature, Signature)
+            type = self.getSignature.type
         else:
             # ES6 says setters have exactly 1 param. I'm not sure if they
             # can have multiple signatures, though.
-            type = self.setSignature.parameters[0].type  # type: ignore[union-attr]
+            assert isinstance(self.setSignature, Signature)
+            type = self.setSignature.parameters[0].type
+
         res = ir.Attribute(
             type=type.render_name(converter),
             **self.member_properties(),
