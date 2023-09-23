@@ -2,7 +2,6 @@ from json import loads
 from unittest import TestCase
 
 import pytest
-from conftest import TYPEDOC_VERSION
 
 from sphinx_js.ir import Attribute, Class, Function, Param, Pathname, Return, TypeParam
 from sphinx_js.renderers import AutoClassRenderer, AutoFunctionRenderer
@@ -106,10 +105,7 @@ class PathSegmentsTests(TypeDocTestCase):
 
     def commented_object(self, comment, **kwargs):
         """Return the object from ``json`` having the given comment short-text."""
-        if TYPEDOC_VERSION >= (0, 23, 0):
-            comment = Comment(summary=[Summary(kind="text", text=comment)])
-        else:
-            comment = Comment(shortText=comment)
+        comment = Comment(summary=[Summary(kind="text", text=comment)])
         return dict_where(self.json, comment=comment, **kwargs)
 
     def commented_object_path(self, comment, **kwargs):
@@ -515,8 +511,6 @@ class TypeNameTests(TypeDocAnalyzerTestCase):
     def test_constrained_by_constructor(self):
         """Make sure ``new ()`` expressions and, more generally, per-property
         constraints are rendered properly."""
-        if TYPEDOC_VERSION < (0, 22, 0):
-            pytest.xfail("Need typedoc 0.22 or later")
         obj = self.analyzer.get_object(["create1"])
         assert obj.params[0].type == "{new (x: number): A}"
         obj = self.analyzer.get_object(["create2"])
@@ -539,8 +533,6 @@ class TypeNameTests(TypeDocAnalyzerTestCase):
         assert obj.type == "{a: number, b?: string}"
 
     def test_code_in_description(self):
-        if TYPEDOC_VERSION < (0, 23, 0):
-            pytest.xfail("Need typedoc version 0.23 or greater")
         obj = self.analyzer.get_object(["codeInDescription"])
         assert (
             obj.description
@@ -558,8 +550,6 @@ And some closing words."""
         )
 
     def test_destructured(self):
-        if TYPEDOC_VERSION < (0, 23, 0):
-            pytest.xfail("Need typedoc version 0.23 or greater")
         obj = self.analyzer.get_object(["destructureTest"])
         assert obj.params[0].name == "options.a"
         assert obj.params[0].type == "string"
