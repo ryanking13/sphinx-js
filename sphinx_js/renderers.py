@@ -211,14 +211,12 @@ class JsRenderer:
         tail += return_.description
         return ["returns"], tail
 
-
     def _type_param_formatter(self, tparam: TypeParam) -> tuple[list[str], str] | None:
         v = tparam.name
         if tparam.extends:
             v += f" extends {tparam.extends}"
         heads = ["typeparam", v]
         return heads, tparam.description
-
 
     def _param_formatter(self, param: Param) -> tuple[list[str], str] | None:
         """Derive heads and tail from ``@param`` blocks."""
@@ -232,7 +230,6 @@ class JsRenderer:
         tail = param.description
         return heads, tail
 
-
     def _param_type_formatter(self, param: Param) -> tuple[list[str], str] | None:
         """Generate types for function parameters specified in field."""
         if not param.type:
@@ -241,7 +238,6 @@ class JsRenderer:
         tail = rst.escape(param.type)
         return heads, tail
 
-
     def _exception_formatter(self, exception: Exc) -> tuple[list[str], str]:
         """Derive heads and tail from ``@throws`` blocks."""
         heads = ["throws"]
@@ -249,7 +245,6 @@ class JsRenderer:
             heads.append(exception.type)
         tail = exception.description
         return heads, tail
-
 
     def _fields(self, obj: TopLevel) -> Iterator[tuple[list[str], str]]:
         """Return an iterable of "info fields" to be included in the directive,
