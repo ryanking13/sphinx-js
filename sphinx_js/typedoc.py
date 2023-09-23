@@ -410,9 +410,7 @@ class Accessor(NodeBase):
             # There's no signature to speak of for a getter: only a return type.
             type = self.getSignature.type
         else:
-            # ES6 says setters have exactly 1 param. I'm not sure if they
-            # can have multiple signatures, though.
-            assert isinstance(self.setSignature, Signature)
+            # ES6 says setters have exactly 1 param.
             type = self.setSignature.parameters[0].type
 
         res = ir.Attribute(
