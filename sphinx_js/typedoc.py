@@ -921,7 +921,7 @@ def riffle(
         yield from i
 
 
-class TypeBase(Base):
+class TypeBase(BaseModel):
     typeArguments: list["TypeD"] = []
 
     def render_name(self, converter: Converter) -> list[str | ir.TypeXRef]:
@@ -955,7 +955,7 @@ class AndOrType(TypeBase):
 
 
 class ArrayType(TypeBase):
-    type: Literal["array"]
+    type: Literal["array"] = "array"
     elementType: "TypeD"
 
     def _render_name_root(self, converter: Converter) -> Iterator[str | ir.TypeXRef]:
@@ -979,7 +979,7 @@ class Target(BaseModel):
 
 
 class IntrinsicType(TypeBase):
-    type: Literal["intrinsic"]
+    type: Literal["intrinsic"] = "intrinsic"
     name: str
 
     def _render_name_root(self, converter: Converter) -> Iterator[str | ir.TypeXRef]:
@@ -987,7 +987,7 @@ class IntrinsicType(TypeBase):
 
 
 class ReferenceType(TypeBase):
-    type: Literal["reference"]
+    type: Literal["reference"] = "reference"
     name: str
     target: int | Target | None
     package: str | None = None
@@ -1032,7 +1032,7 @@ class ReflectionType(TypeBase):
 
 
 class LiteralType(TypeBase):
-    type: Literal["literal"]
+    type: Literal["literal"] = "literal"
     value: Any
 
     def _render_name_root(self, converter: Converter) -> Iterator[str | ir.TypeXRef]:
@@ -1048,7 +1048,7 @@ class LiteralType(TypeBase):
 
 
 class TupleType(TypeBase):
-    type: Literal["tuple"]
+    type: Literal["tuple"] = "tuple"
     elements: list["TypeD"]
 
     def _render_name_root(self, converter: Converter) -> Iterator[str | ir.TypeXRef]:
