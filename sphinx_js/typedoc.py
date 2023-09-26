@@ -24,7 +24,7 @@ from .suffix_tree import SuffixTree
 
 __all__ = ["Analyzer"]
 
-MIN_TYPEDOC_VERSION = (0, 24, 0)
+MIN_TYPEDOC_VERSION = (0, 25, 0)
 
 
 @cache
@@ -61,12 +61,9 @@ def typedoc_output(
             f"Typedoc version {version_to_str(typedoc_version)} is too old, minimum required is {version_to_str(MIN_TYPEDOC_VERSION)}"
         )
 
-    command = Command("node")
     os.environ["TYPEDOC_NODE_MODULES"] = str(Path(typedoc).parents[2])
-    if typedoc_version >= (0, 24, 0):
-        command.add(str(Path(__file__).parent / "typedoc_0.24.mjs"))
-    else:
-        command.add(typedoc)
+    command = Command("node")
+    command.add(str(Path(__file__).parent / "call_typedoc.mjs"))
     command.add("--entryPointStrategy", "expand")
 
     if config_path:

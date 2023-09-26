@@ -17,18 +17,6 @@ function walk(o) {
   }
 }
 
-async function bootstrapAppTypedoc0_24() {
-  const app = new td.Application();
-
-  app.options.addReader(new td.ArgumentsReader(0));
-  app.options.addReader(new td.TypeDocReader());
-  app.options.addReader(new td.PackageJsonReader());
-  app.options.addReader(new td.TSConfigReader());
-  app.options.addReader(new td.ArgumentsReader(300));
-  await app.bootstrapWithPlugins();
-  return app;
-}
-
 async function bootstrapAppTypedoc0_25() {
   return await td.Application.bootstrapWithPlugins({}, [
     new td.ArgumentsReader(0),
@@ -47,12 +35,7 @@ async function main() {
   );
   // Most of this stuff is copied from typedoc/src/lib/cli.ts
   const start = Date.now();
-  let app;
-  try {
-    app = await bootstrapAppTypedoc0_24();
-  } catch (_) {
-    app = await bootstrapAppTypedoc0_25();
-  }
+  let app = await bootstrapAppTypedoc0_25();
 
   const project = await app.convert();
   const preValidationWarnCount = app.logger.warningCount;
