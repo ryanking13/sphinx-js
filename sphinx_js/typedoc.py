@@ -842,7 +842,7 @@ class Signature(TopLevelProperties):
             assert isinstance(tag, ir.DescriptionText)
             destructure_targets.extend(tag.text.split(" "))
 
-        def should_destructure(p):
+        def should_destructure(p: Param) -> bool:
             if not isinstance(p.type, ReflectionType):
                 return False
             if p.name in destructure_targets:
