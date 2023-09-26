@@ -47,7 +47,10 @@ def version_to_str(t: Sequence[int]) -> str:
 
 
 def typedoc_output(
-    abs_source_paths: list[str], sphinx_conf_dir: str | pathlib.Path, config_path: str
+    abs_source_paths: list[str],
+    sphinx_conf_dir: str | pathlib.Path,
+    config_path: str,
+    base_dir: str,
 ) -> "Project":
     """Return the loaded JSON output of the TypeDoc command run over the given
     paths."""
@@ -69,6 +72,15 @@ def typedoc_output(
     if config_path:
         tsconfig_path = str((Path(sphinx_conf_dir) / config_path).absolute())
         command.add("--tsconfig", tsconfig_path)
+
+    # We want to use the url field to compute the file paths.
+
+    # --disableGit prevents typedoc from doing complicated magic with git that
+    # makes the url field harder to understand.
+    command.add("--disableGit")
+    # sourceLinkTemplate makes the url field contain just the file path
+    command.add("--sourceLinkTemplate", "{path}")
+    command.add("--basePath", base_dir)
 
     with NamedTemporaryFile(mode="w+b") as temp:
         command.add("--json", temp.name, *abs_source_paths)
@@ -105,21 +117,14 @@ class Converter:
         We don't unnest them, but we do add ``__parent`` keys so we can easily walk
         both up and down.
         """
-        self._populate_index_inner(root, parent=None, containing_module=[])
+        self._populate_index_inner(root, parent=None)
         return self
 
     def _url_to_filepath(self, url: str) -> list[str]:
         if not url:
             return []
-        # url looks like "https://github.com/project/repo/blob/<hash>/path/to/file.ts#lineno
-        entries = url.split("/")
-        blob_idx = entries.index("blob")
-        # have to skip blob and hash too
-        entries = entries[blob_idx + 2 :]
+        entries = ["."] + url.split("/")
         entries[-1] = entries[-1].rsplit(".")[0]
-        a = Path("/".join(entries)).resolve().relative_to(Path(self.base_dir).resolve())
-        entries = ["."]
-        entries.extend(a.parts)
         for i in range(len(entries) - 1):
             entries[i] += "/"
         return entries
@@ -128,7 +133,6 @@ class Converter:
         self,
         node: "IndexType",
         parent: "IndexType | None",
-        containing_module: list[str],
         filepath: list[str] | None = None,
     ) -> None:
         if node.id is not None:  # 0 is okay; it's the root node.
@@ -141,9 +145,6 @@ class Converter:
         if filepath:
             node.filepath = filepath
         self.compute_path(node, parent_kind, parent_segments, filepath)
-
-        if node.kindString == "Module":
-            containing_module = node.path
 
         if parent and isinstance(node, Signature):
             node.parent_member_properties = parent.member_properties()
@@ -177,7 +178,6 @@ class Converter:
             self._populate_index_inner(
                 child,
                 parent=node,
-                containing_module=containing_module,
                 filepath=filepath,
             )
 
@@ -254,7 +254,7 @@ class Analyzer:
         cls, abs_source_paths: list[str], app: Sphinx, base_dir: str
     ) -> "Analyzer":
         json = typedoc_output(
-            abs_source_paths, app.confdir, app.config.jsdoc_config_path
+            abs_source_paths, app.confdir, app.config.jsdoc_config_path, base_dir
         )
         return cls(json, base_dir)
 
