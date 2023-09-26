@@ -1,10 +1,10 @@
 """Test incremental builds."""
 
 import warnings
+from pathlib import Path
 
 import pytest
 from sphinx.environment import CONFIG_NEW, CONFIG_OK
-from sphinx.testing.path import path
 from sphinx.testing.util import strip_escseq
 
 
@@ -56,7 +56,7 @@ def do_test(app, extension="js"):
     assert writes == []
 
     # Incremental build, one file changed.
-    a_js = path(app.srcdir) / f"a.{extension}"
+    a_js = Path(app.srcdir) / f"a.{extension}"
     a_js.write_text(a_js.read_text() + "\n\n")
 
     assert app.env.config_status == CONFIG_OK
@@ -69,7 +69,7 @@ def do_test(app, extension="js"):
     assert writes == ["a", "a_b", "index"]
 
     # Incremental build, the other file changed.
-    b_js = path(app.srcdir) / "inner" / f"b.{extension}"
+    b_js = Path(app.srcdir) / "inner" / f"b.{extension}"
     b_js.write_text(b_js.read_text() + "\n\n")
 
     assert app.env.config_status == CONFIG_OK
