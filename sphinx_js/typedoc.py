@@ -1058,8 +1058,18 @@ class TupleType(TypeBase):
         yield "]"
 
 
-class OtherType(TypeBase):
-    type: Literal["indexedAccess"]
+class UnimplementedType(TypeBase):
+    type: Literal[
+        "indexedAccess",
+        "inferred",
+        "conditional",
+        "mapped",
+        "namedTupleMember",
+        "optional",
+        "query",
+        "rest",
+        "templateLiteral",
+    ]
 
     def _render_name_root(self, converter: Converter) -> Iterator[str | ir.TypeXRef]:
         yield "<TODO: not implemented>"
@@ -1091,7 +1101,6 @@ Type = (
     AndOrType
     | ArrayType
     | LiteralType
-    | OtherType
     | OperatorType
     | IntrinsicType
     | ReferenceType
@@ -1099,6 +1108,7 @@ Type = (
     | TupleType
     | PredicateType
     | UnknownType
+    | UnimplementedType
 )
 
 TypeD = Annotated[Type, Field(discriminator="type")]
