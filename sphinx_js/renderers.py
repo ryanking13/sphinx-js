@@ -272,8 +272,11 @@ class JsRenderer:
                 # A sphinx role, leave it alone
                 content.append(s.code)
                 continue
-            # Used single uptick with code, put double upticks
-            content.append(f"`{s.code}`")
+            if prev.endswith(" ") and not s.code.endswith(">`"):
+                # Used single uptick with code, put double upticks
+                content.append(f"`{s.code}`")
+                continue
+            content.append(s.code)
         return "".join(content)
 
     def render_type(self, type: Type, escape: bool = False, bold: bool = True) -> str:

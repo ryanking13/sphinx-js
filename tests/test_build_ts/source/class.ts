@@ -110,3 +110,10 @@ export function predicate(c): c is ConstructorlessClass {
 export function weirdCodeInDescription() {
 
 }
+
+/**
+ * `abc <http://example.com>`_
+ */
+export function spinxLinkInDescription() {
+
+}

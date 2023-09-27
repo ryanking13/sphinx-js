@@ -227,3 +227,11 @@ class TestHtmlBuilder(SphinxBuildTestCase):
         thunk_links = get_links("thunk")
         assert thunk_links[1].get_text() == "OptionalThings()"
         assert thunk_links[2].get_text() == "ConstructorlessClass()"
+
+    def test_sphinx_link_in_description(self):
+        soup = BeautifulSoup(
+            self._file_contents("sphinx_link_in_description"), "html.parser"
+        )
+        href = soup.find(id="spinxLinkInDescription").parent.find_all("a")[1]
+        assert href.get_text() == "abc"
+        assert href.attrs["href"] == "http://example.com"
