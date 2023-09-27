@@ -350,6 +350,7 @@ class Comment(BaseModel):
 
 class Flags(BaseModel):
     isAbstract: bool = False
+    isExternal: bool = False
     isOptional: bool = False
     isPrivate: bool = False
     isRest: bool = False
