@@ -98,7 +98,7 @@ class TypeDocAnalyzerTestCase(TypeDocTestCase):
         def should_destructure(sig, p):
             return p.name == "destructureThisPlease"
 
-        cls.analyzer = TsAnalyzer(cls.json, cls._source_dir, should_destructure)
+        cls.analyzer = TsAnalyzer(cls.json, cls._source_dir, should_destructure_arg=should_destructure)
 
 
 NO_MATCH = object()
