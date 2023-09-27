@@ -7,3 +7,5 @@
    :members:
 
    Same here.
+
+.. js:autofunction:: weirdCodeInDescription

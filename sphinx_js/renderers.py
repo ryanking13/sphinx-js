@@ -253,15 +253,15 @@ class JsRenderer:
                 content.append(prev)
                 continue
             # code
-            if s.code.startswith("```"):
+            if s.code.startswith("```") and s.code.count("\n") >= 1:
+                # A code pen
                 first_line, rest = s.code.split("\n", 1)
-                mid, _last_line = rest.rsplit("\n", 1)
+                rest = rest.removesuffix("```")
                 code_type = first_line.removeprefix("```")
                 start = f".. code-block:: {code_type}\n\n"
-                codeblock = textwrap.indent(mid, " " * 4)
+                codeblock = textwrap.indent(rest, " " * 4)
                 end = "\n\n"
                 content.append("\n" + start + codeblock + end)
-                # A code pen
                 continue
 
             if s.code.startswith("``"):

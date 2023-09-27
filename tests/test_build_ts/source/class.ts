@@ -102,3 +102,11 @@ export class Iterable {
 export function predicate(c): c is ConstructorlessClass {
   return false;
 }
+
+/**
+ * This shouldn't crash the renderer:
+ * ```things```
+ */
+export function weirdCodeInDescription() {
+
+}
