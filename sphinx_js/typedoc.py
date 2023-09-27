@@ -134,7 +134,7 @@ class Converter:
         if not url:
             return []
         entries = ["."] + url.split("/")
-        entries[-1] = entries[-1].rsplit(".")[0]
+        entries[-1] = entries[-1].rpartition(".")[0]
         for i in range(len(entries) - 1):
             entries[i] += "/"
         return entries
