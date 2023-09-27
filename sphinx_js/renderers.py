@@ -272,6 +272,7 @@ class JsRenderer:
                 # A sphinx role, leave it alone
                 content.append(s.code)
                 continue
+
             if prev.endswith(" ") and not s.code.endswith(">`"):
                 # Used single uptick with code, put double upticks
                 content.append(f"`{s.code}`")

@@ -104,22 +104,31 @@ def parse(json: dict[str, Any]) -> "Project":
         raise
 
 
+ShouldDestructureArgType = typing.Callable[["Signature", "Param"], bool]
+PostConvertType = typing.Callable[["Node | Signature", ir.TopLevel], None]
+
+
 class Converter:
     base_dir: str
     index: dict[int, "IndexType"]
-    _should_destructure_arg: typing.Callable[["Signature", "Param"], bool]
+    _should_destructure_arg: ShouldDestructureArgType
+    _post_convert: PostConvertType
 
     def __init__(
         self,
         base_dir: str,
-        should_destructure_arg: typing.Callable[["Signature", "Param"], bool]
-        | None = None,
+        *,
+        should_destructure_arg: ShouldDestructureArgType | None = None,
+        post_convert: PostConvertType | None = None,
     ):
         self.base_dir: str = base_dir
         self.index: dict[int, IndexType] = {}
         if not should_destructure_arg:
             should_destructure_arg = lambda sig, param: False
         self._should_destructure_arg = should_destructure_arg
+        if not post_convert:
+            post_convert = lambda node, ir: None
+        self._post_convert = post_convert
 
     def populate_index(self, root: "IndexType") -> "Converter":
         """Create an ID-to-node mapping for all the TypeDoc output nodes.
@@ -238,9 +247,10 @@ class Converter:
                 # Ignore nodes with a reference to absolute paths (like /usr/lib)
                 continue
             converted, more_todo = node.to_ir(self)
-            if converted:
-                done.append(converted)
             todo.extend(more_todo)
+            if converted:
+                self._post_convert(node, converted)
+                done.append(converted)
         return done
 
 
@@ -249,8 +259,9 @@ class Analyzer:
         self,
         json: "Project",
         base_dir: str,
-        should_destructure_arg: typing.Callable[["Signature", "Param"], bool]
-        | None = None,
+        *,
+        should_destructure_arg: ShouldDestructureArgType | None = None,
+        post_convert: PostConvertType | None = None,
     ):
         """
         :arg json: The loaded JSON output from typedoc
@@ -258,7 +269,11 @@ class Analyzer:
             construct file-path segments of object paths
 
         """
-        converter = Converter(base_dir, should_destructure_arg).populate_index(json)
+        converter = Converter(
+            base_dir,
+            should_destructure_arg=should_destructure_arg,
+            post_convert=post_convert,
+        ).populate_index(json)
         ir_objects = converter.convert_all_nodes(json)
 
         self._base_dir = base_dir
@@ -272,7 +287,12 @@ class Analyzer:
         json = typedoc_output(
             abs_source_paths, app.confdir, app.config.jsdoc_config_path, base_dir
         )
-        return cls(json, base_dir, app.config.ts_should_destructure_arg)
+        return cls(
+            json,
+            base_dir,
+            should_destructure_arg=app.config.ts_should_destructure_arg,
+            post_convert=app.config.ts_post_convert,
+        )
 
     def get_object(
         self,
