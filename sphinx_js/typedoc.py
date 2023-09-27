@@ -325,6 +325,7 @@ def description_to_ir(desc: Sequence[DescriptionItem]) -> Sequence[ir.Descriptio
 class Comment(BaseModel):
     summary: list[DescriptionItem] = []
     blockTags: list[Tag] = []
+    modifierTags: list[str] = []
     tags: dict[str, list[Sequence[DescriptionItem]]] = Field(
         default_factory=partial(defaultdict, list)
     )
