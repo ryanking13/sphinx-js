@@ -309,7 +309,6 @@ class JsRenderer:
                 break
             res.append(self.render_xref(xref[0], escape))
 
-        print(res)
         return r"\ ".join(res)
 
     def render_xref(self, s: TypeXRef, escape: bool = False) -> str:
