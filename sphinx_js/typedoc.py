@@ -5,10 +5,9 @@ import pathlib
 import re
 import subprocess
 import typing
-from collections import defaultdict
 from collections.abc import Iterable, Iterator, Sequence
 from errno import ENOENT
-from functools import cache, partial
+from functools import cache
 from inspect import isclass
 from json import load
 from pathlib import Path
@@ -346,23 +345,21 @@ class Comment(BaseModel):
     summary: list[DescriptionItem] = []
     blockTags: list[Tag] = []
     modifierTags: list[str] = []
-    tags: dict[str, list[Sequence[DescriptionItem]]] = Field(
-        default_factory=partial(defaultdict, list)
-    )
+    tags: dict[str, list[Sequence[DescriptionItem]]] = Field(default_factory=dict)
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         for tag in self.blockTags:
-            self.tags[tag.tag.removeprefix("@")].append(tag.content)
+            self.tags.setdefault(tag.tag.removeprefix("@"), []).append(tag.content)
 
     def get_description(self) -> Sequence[ir.DescriptionItem]:
         return description_to_ir(self.summary)
 
     def get_tag_list(self, tag: str) -> list[Sequence[ir.DescriptionItem]]:
-        return [description_to_ir(t) for t in self.tags[tag]]
+        return [description_to_ir(t) for t in self.tags.get(tag, [])]
 
     def get_tag_one(self, tag: str) -> Sequence[ir.DescriptionItem]:
-        l = self.tags[tag]
+        l = self.tags.get(tag, None)
         if not l:
             return []
         assert len(l) == 1
