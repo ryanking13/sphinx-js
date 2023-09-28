@@ -1,6 +1,7 @@
 from textwrap import dedent, indent
 
 import pytest
+from sphinx.util import rst
 
 from sphinx_js.ir import (
     DescriptionCode,
@@ -51,6 +52,14 @@ def test_render_description():
     )
 
 
+def ts_xref_formatter(config, xref):
+    if isinstance(xref, TypeXRefInternal):
+        name = rst.escape(xref.name)
+        return f":js:class:`{name}`"
+    else:
+        return xref.name
+
+
 @pytest.fixture()
 def function_renderer():
     class _config:
@@ -63,7 +72,7 @@ def function_renderer():
     renderer._app = _app
     renderer._explicit_formal_params = None
     renderer._content = []
-    renderer._set_xref_formatter(None)
+    renderer._set_xref_formatter(ts_xref_formatter)
     return renderer
 
 
