@@ -78,6 +78,8 @@ class JsRenderer:
         def default_type_xref_formatter(xref: TypeXRef) -> str:
             return xref.name
 
+        self._type_xref_formatter = default_type_xref_formatter
+
     def _set_type_text_formatter(
         self, formatter: Callable[[Config, str], str] | None
     ) -> None:
