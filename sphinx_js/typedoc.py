@@ -913,7 +913,13 @@ class Signature(TopLevelProperties):
         assert isinstance(type, ReflectionType)
         decl = type.declaration
         result = []
-        for child in decl.children:
+
+        def key(c: Node) -> tuple[int, int]:
+            src = c.sources[0]
+            return (src.line, src.character)
+
+        children = sorted(decl.children, key=key)
+        for child in children:
             assert isinstance(child, Member)
             result.append(
                 Param(
