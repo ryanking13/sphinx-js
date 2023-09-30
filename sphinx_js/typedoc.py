@@ -959,14 +959,11 @@ class Signature(TopLevelProperties):
         yield ") => "
         return_type = self.return_type(converter)
         if return_type:
-            ret = return_type[0].type
+            res = return_type[0].type
+            assert isinstance(res, list)
+            yield from res
         else:
-            ret = "void"
-        assert ret
-        if isinstance(ret, str):
-            yield ret
-        else:
-            yield from ret
+            yield ir.TypeXRefIntrinsic("void")
 
     def to_ir(
         self, converter: Converter
@@ -1135,11 +1132,11 @@ class LiteralType(TypeBase):
 
     def _render_name_root(self, converter: Converter) -> Iterator[str | ir.TypeXRef]:
         if self.value is None:
-            yield "null"
+            yield ir.TypeXRefIntrinsic("null")
             return
         # TODO: it could be a bigint or a string?
         if isinstance(self.value, int):
-            yield "number"
+            yield ir.TypeXRefIntrinsic("number")
             return
         yield "<TODO: Unknown type>"
         return
