@@ -471,16 +471,16 @@ class JsRenderer:
         for collection_attr, callback in FIELD_TYPES:
             for instance in getattr(obj, collection_attr, []):
                 result = callback(instance)
-                if result:
-                    heads, tail = result
-                    # If there are line breaks in the tail, the RST parser will
-                    # end the field list prematurely.
-                    #
-                    # TODO: Instead, indent multi-line tails juuuust right, and
-                    # we can enjoy block-level constructs within tails:
-                    # https://docutils.sourceforge.io/docs/ref/rst/
-                    # restructuredtext.html#field-lists.
-                    yield [rst.escape(h) for h in heads], unwrapped(tail)
+                if not result:
+                    continue
+                heads, tail = result
+                # If there are line breaks in the tail, the RST parser will
+                # end the field list prematurely.
+                #
+                # TODO: Instead, indent multi-line tails juuuust right, and
+                # we can enjoy block-level constructs within tails:
+                # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#field-lists.
+                yield [rst.escape(h) for h in heads], unwrapped(tail)
 
 
 class AutoFunctionRenderer(JsRenderer):
